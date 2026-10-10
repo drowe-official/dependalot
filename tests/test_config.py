@@ -28,3 +28,9 @@ def test_token_still_from_env(monkeypatch):
     monkeypatch.delenv("GH_TOKEN")
     with pytest.raises(ConfigError, match="GITHUB_TOKEN"):
         load_settings(org="my-org")
+
+
+def test_classic_pat_is_rejected(monkeypatch):
+    monkeypatch.setenv("GITHUB_TOKEN", "ghp_classic")
+    with pytest.raises(ConfigError, match="Classic PATs"):
+        load_settings(org="my-org")

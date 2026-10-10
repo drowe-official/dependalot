@@ -9,12 +9,13 @@ from dataclasses import dataclass
 DEFAULT_METHOD = "rebase"
 MERGE_METHODS = ("rebase", "squash", "merge")
 
-TOKEN_HELP = (
-    "No GitHub token found. Export GITHUB_TOKEN (or GH_TOKEN) with a token that has:\n"
-    "  - classic PAT: the 'repo' scope, or\n"
-    "  - fine-grained PAT: Pull requests (read/write), Contents (read/write),\n"
-    "    Checks and Commit statuses (read) on the org's repositories."
+TOKEN_PERMISSIONS = (
+    "a fine-grained PAT (resource owner: the org) with Pull requests (read/write),\n"
+    "Contents (read/write), Workflows (read/write), Checks (read) and\n"
+    "Commit statuses (read) on the org's repositories."
 )
+TOKEN_HELP = "No GitHub token found. Export GITHUB_TOKEN (or GH_TOKEN) with " + TOKEN_PERMISSIONS
+CLASSIC_TOKEN_HELP = "Classic PATs (ghp_...) are not supported. Use " + TOKEN_PERMISSIONS
 
 
 class ConfigError(Exception):
@@ -38,5 +39,7 @@ def load_settings(org: str, method: str = DEFAULT_METHOD) -> Settings:
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if not token:
         raise ConfigError(TOKEN_HELP)
+    if token.startswith("ghp_"):
+        raise ConfigError(CLASSIC_TOKEN_HELP)
 
     return Settings(org=org, token=token, merge_method=merge_method)

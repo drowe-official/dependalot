@@ -1,81 +1,50 @@
 # dependalot
 
-Triage Dependabot pull requests across a whole GitHub organization from the terminal:
-list them, read the release notes / changelog / commits Dependabot attaches, and
-approve + merge the ones whose checks have passed — in a keypress.
+Manage Dependabot pull requests across a GitHub organization from the terminal:
+list them, read the release notes/changelog/commits Dependabot attaches, and
+approve + merge the ones whose checks have passed.
 
 ## Install
 
-Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/)
 
 ```sh
-uv tool install .          # puts `dependalot` on your PATH
-# or, from a checkout:
+ # puts `dependalot` on your PATH
+uv tool install .
+dependalot --help
+
+# or, without installing:
 uv run dependalot --help
 ```
 
-### Windows
-
-Use [Windows Terminal](https://aka.ms/terminal) (the default on Windows 11). The
-full-screen `review` UI needs a modern terminal, and the old console host doesn't render
-it properly. In PowerShell:
-
-1. Install uv (or use `winget install --id=astral-sh.uv -e`), then open a new terminal so
-   `uv` is on your `PATH`:
-
-   ```powershell
-   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-
-2. Install Python 3.13 if you don't have it. uv manages its own copy, so this doesn't
-   affect any other Python on the machine:
-
-   ```powershell
-   uv python install 3.13
-   ```
-
-3. From a checkout of this repository, install dependalot and add uv's tool directory to
-   your `PATH`, then open a new terminal:
-
-   ```powershell
-   uv tool install .
-   uv tool update-shell
-   ```
-
-4. Set your token (see [Authentication](#authentication)) and check it works:
-
-   ```powershell
-   $env:GITHUB_TOKEN = "ghp_..."
-   dependalot list --org my-org
-   ```
-
-If `show` or `review --plain` prints raw escape codes like `←[1m` through the pager, add
-`--no-pager`.
-
-Alternatively, run dependalot inside [WSL](https://learn.microsoft.com/windows/wsl/) and
-follow the Linux steps. Opening PRs in the browser (`o` in the review screen) still opens
-your Windows browser.
+If `dependalot` isn't found after installing, run `uv tool update-shell` and open a new
+terminal.
 
 ## Authentication
 
-Export a GitHub token as `GITHUB_TOKEN` (or `GH_TOKEN`):
+To list, approve and merge PRs, export a **fine-grained** personal access token as
+`GITHUB_TOKEN` (or `GH_TOKEN`). Classic PATs (`ghp_...`) are rejected. Create the token with
+the org as resource owner, give it access to the repositories you want to manage, and grant
+these repository permissions:
 
-- **Classic PAT:** `repo` scope.
-- **Fine-grained PAT** (resource owner: the org): *Pull requests* read/write,
-  *Contents* read/write, *Checks* and *Commit statuses* read.
+| Permission | Access | Used for |
+|------------|--------|----------|
+| *Pull requests* | read/write | Read: finding Dependabot PRs and reading their title, description, mergeability and review state (`list`, `show`, `review`). Write: approving a PR when branch protection requires a review. |
+| *Contents* | read/write | Merging: the merge endpoint writes commits to the base branch, so GitHub checks it under Contents. |
+| *Workflows* | read/write | Merging PRs that change files under `.github/workflows/`, such as Dependabot `github-actions` updates. Without it GitHub refuses these merges. |
+| *Checks* | read | Seeing check runs (GitHub Actions and other Checks API apps) in the PR's CI status. |
+| *Commit statuses* | read | Seeing commit statuses posted by external CI in the PR's CI status. |
+| *Metadata* | read | Always included. Repository permissions and allowed merge methods. |
+
+Checks and Commit statuses are both needed to see the PR's full CI result. If either is
+missing, a PR with failing CI can show as ready.
 
 ```sh
-export GITHUB_TOKEN=ghp_...
+export GITHUB_TOKEN=github_pat_...
 ```
 
-On Windows, in PowerShell:
-
-```powershell
-$env:GITHUB_TOKEN = "ghp_..."        # this terminal only
-setx GITHUB_TOKEN "ghp_..."          # saved for new terminals (not the current one)
-```
-
-In `cmd.exe`, use `set GITHUB_TOKEN=ghp_...`. `DEPENDALOT_ORG` is set the same way.
+This works the same in Linux, WSL and Git Bash. To keep it for new terminals, add the
+line to `~/.bashrc`. `DEPENDALOT_ORG` is set the same way.
 
 ## Options
 
@@ -102,12 +71,10 @@ and the token is read from the environment.
 
 ```sh
 dependalot list --org my-org                  # all open Dependabot PRs in the org
-dependalot list --org my-org --repo my-repo --mergeable-only
 
 dependalot show --org my-org my-repo#12       # release notes, changelog, commits
-dependalot show --org my-org https://github.com/my-org/my-repo/pull/12
 
-dependalot merge --org my-org my-repo#12      # approve (if needed) + merge, with confirmation
+dependalot merge --org my-org my-repo#12
 dependalot merge --org my-org my-repo#12 --yes --method squash
 
 dependalot review --org my-org                # full-screen review of ready-to-merge PRs
@@ -136,7 +103,6 @@ PR's details on the right — status, then Dependabot's *Release notes*, *Change
 | `r` | Refresh the list from GitHub (e.g. once pending checks finish) |
 | `q` | Quit and print a summary |
 
-The scroll keys work while the PR list keeps focus, so `↑`/`↓` always move between PRs.
 The mouse wheel also scrolls the description; click a section title to expand or collapse
 it, and click links to open them. While the details pane is hidden, a thin strip stays on
 the right; click it (or press `d`) to bring the pane back. The full-screen UI needs an interactive terminal;
