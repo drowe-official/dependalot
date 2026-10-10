@@ -34,6 +34,26 @@ class Item:
     outcome: str | None = None  # merged | approved | skipped | failed
 
 
+class WrappingFooter(Footer):
+    """A Footer that lays its keys out over two rows, so none are cut off on narrow terminals."""
+
+    DEFAULT_CSS = """
+    WrappingFooter {
+        layout: grid;
+        grid-columns: auto;
+        height: 2;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        keys = list(super().compose())
+        # Footer sets one column per key; halve that (rounding up) to get two rows.
+        # The command palette key is docked right, outside the grid, so doesn't count.
+        gridded = [k for k in keys if not k.has_class("-command-palette")]
+        self.styles.grid_size_columns = max(1, (len(gridded) + 1) // 2)
+        yield from keys
+
+
 class ConfirmScreen(ModalScreen[bool]):
     """A yes/no dialog; dismisses with True on confirm."""
 
@@ -236,7 +256,7 @@ class ReviewApp(App[Counter[str]]):
                 yield Markdown(id="intro")
                 yield Vertical(id="sections")
             yield DetailTab("◀\n\nd", id="detail-tab")
-        yield Footer()
+        yield WrappingFooter(compact=True)
 
     def on_mount(self) -> None:
         table = self.query_one("#prs", DataTable)
