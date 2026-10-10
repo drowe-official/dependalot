@@ -260,17 +260,23 @@ class ReviewApp(App[Counter[str]]):
 
     def on_mount(self) -> None:
         table = self.query_one("#prs", DataTable)
-        table.add_column("Type", key="type")
-        table.add_column("PR", key="pr")
         table.add_column("Package", key="package")
+        table.add_column("PR", key="pr")
         table.add_column("Update", key="update")
+        table.add_column("Type", key="type")
         table.add_column("Status", key="status")
         self._fill_table()
         table.focus()
 
     def _items_for(self, prs: list[DependabotPR]) -> list[Item]:
         items = [Item(pr, evaluate(pr, self.method)) for pr in prs]
-        return [i for i in items if i.check.can_merge or self.include_all]
+        items = [i for i in items if i.check.can_merge or self.include_all]
+        return sorted(items, key=self._sort_key)
+
+    @staticmethod
+    def _sort_key(item: Item) -> tuple[str, str, int]:
+        package, _ = update_cells(item.pr)
+        return str(package).casefold(), item.pr.repo, item.pr.number
 
     def _fill_table(self) -> None:
         table = self.query_one("#prs", DataTable)
@@ -278,10 +284,10 @@ class ReviewApp(App[Counter[str]]):
         for idx, item in enumerate(self.items):
             package, update = update_cells(item.pr)
             table.add_row(
-                Text(item.pr.ecosystem or "?", style="magenta"),
-                f"{short_repo(item.pr.repo)}#{item.pr.number}",
                 package,
+                f"{short_repo(item.pr.repo)}#{item.pr.number}",
                 update,
+                Text(item.pr.ecosystem or "?", style="magenta"),
                 self._status_cell(item),
                 key=str(idx),
             )

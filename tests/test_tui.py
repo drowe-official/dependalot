@@ -83,6 +83,14 @@ async def test_hides_unmergeable_unless_all():
     assert [i.pr.number for i in app_all.items] == [7, 8]
 
 
+def test_sorted_by_package():
+    def bump(number, package):
+        return make_node(number=number, title=f"Bump {package} from 1.0 to 2.0")
+
+    _, app = make_app([bump(1, "urllib3"), bump(2, "Django"), bump(3, "attrs")])
+    assert [i.pr.number for i in app.items] == [3, 2, 1]
+
+
 async def test_merge_cancelled_does_nothing():
     client, app = make_app([make_node()])
     async with app.run_test(size=(140, 40)) as pilot:
@@ -128,7 +136,7 @@ async def test_grouped_update_sections_are_labelled_by_package():
         await pilot.pause()
         table = app.query_one("#prs", DataTable)
         row = [str(cell) for cell in table.get_row_at(0)]
-        assert row[2:4] == ["actions group", "2 updates"]
+        assert (row[0], row[2]) == ("actions group", "2 updates")
         titles = [c.title for c in app.query(Collapsible)]
         assert titles[0] == "actions/checkout · Release notes"
         assert titles[-1] == "actions/setup-python · Commits"

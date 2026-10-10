@@ -48,9 +48,9 @@ line to `~/.bashrc`. `DEPENDALOT_ORG` is set the same way.
 
 ## Options
 
-Settings are passed as command-line flags; there is no config file. The organization can
+Settings are passed as command-line flags. The organization can
 also be set with the `DEPENDALOT_ORG` environment variable (the flag wins if both are set),
-and the token is read from the environment.
+and the token is read from the `GITHUB_TOKEN` or `GH_TOKEN` environment variable.
 
 | Option | Commands | Meaning | Default |
 |--------|----------|---------|---------|
