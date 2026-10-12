@@ -4,6 +4,13 @@ Manage Dependabot pull requests across a GitHub organization from the terminal:
 list them, read the release notes/changelog/commits Dependabot attaches, and
 approve + merge the ones whose checks have passed.
 
+### List Dependabot PRs
+https://github.com/user-attachments/assets/5128f7f6-907a-4adf-8275-ab1f24a0e429
+
+
+### Approve and Merge Dependabot PRs
+https://github.com/user-attachments/assets/767bfcb0-f03c-4156-bf95-2c924e0415d7
+
 ## Install
 
 Requires [uv](https://docs.astral.sh/uv/)
